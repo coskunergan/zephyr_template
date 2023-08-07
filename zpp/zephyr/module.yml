@@ -1,6 +1,0 @@
-build:
-  cmake: .
-samples:
-  - samples
-tests:
-  - tests
