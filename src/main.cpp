@@ -11,25 +11,19 @@
 #include <zephyr/kernel.h>
 #include <zephyr/arch/cpu.h>
 #include <zephyr/sys/arch_interface.h>
+#include <zephyr/sys/libc-hooks.h>
 
 #include <zpp.hpp>
 #include <chrono>
+#include "printf_io.h"
 
 #define STACK_SIZE (1024 + CONFIG_TEST_EXTRA_STACK_SIZE)
 
-#if !DT_NODE_EXISTS(DT_NODELABEL(lcd_bl))
-#error "Overlay for gipo node not properly defined."
-#endif
+using namespace device_printf;
 
 #if !DT_NODE_EXISTS(DT_NODELABEL(buzzer))
 #error "Overlay for gipo node not properly defined."
 #endif
-
-static const struct gpio_dt_spec lcd_bl =
-    GPIO_DT_SPEC_GET_OR(DT_NODELABEL(lcd_bl), gpios,
-                        {
-                            0
-                        });
 
 static const struct gpio_dt_spec buzzer =
     GPIO_DT_SPEC_GET_OR(DT_NODELABEL(buzzer), gpios,
@@ -53,22 +47,16 @@ void test_task(int my_id) noexcept
     for(;;)
     {
         zpp::this_thread::sleep_for(std::chrono::milliseconds(500));
-        gpio_pin_toggle_dt(&lcd_bl);
+       // gpio_pin_toggle_dt(&lcd_bl);
     }
 }
 
 int main(void)
 {
-    if(!gpio_is_ready_dt(&lcd_bl))
-    {
-        return 0;
-    }
+    printf("\rRestart...");
+
     if(!gpio_is_ready_dt(&buzzer))
-    {
-        return 0;
-    }
-    if(gpio_pin_configure_dt(&lcd_bl, GPIO_OUTPUT_INACTIVE) != 0)
-    {
+    { 
         return 0;
     }
     if(gpio_pin_configure_dt(&buzzer, GPIO_OUTPUT_INACTIVE) != 0)
