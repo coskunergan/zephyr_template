@@ -17,6 +17,7 @@
 #include <chrono>
 #include "printf_io.h"
 #include "buzzer.h"
+#include "encoder.h"
 
 #define STACK_SIZE (1024 + CONFIG_TEST_EXTRA_STACK_SIZE)
 
@@ -24,6 +25,7 @@ using namespace zpp;
 using namespace std::chrono;
 using namespace device_printf;
 using namespace device_buzzer;
+using namespace device_encoder;
 
 namespace
 {
@@ -31,7 +33,7 @@ namespace
     thread_data tcb;
     thread t;
 
-} // anonimouse namespace
+}
 
 void test_task(int my_id) noexcept
 {
@@ -41,13 +43,20 @@ void test_task(int my_id) noexcept
     {
         this_thread::sleep_for(3s);
         buzzer.beep(5ms);
+        printf("\rEnc : %d",encoder.get_count());
     }
 }
 
 int main(void)
 {
     printf_io.turn_off_bl_enable();
-    printf("\rRestart...");
+    printf("\rRestart..");
+
+    encoder.set_event_hook([]
+    {
+        printf("\rEncoder...");
+        buzzer.beep(10ms);
+    });
 
     const thread_attr attrs(
         thread_prio::preempt(10),

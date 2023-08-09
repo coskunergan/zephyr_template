@@ -28,4 +28,12 @@
 		compatible = "buzzer";
 		gpios = <&gpioa 11 GPIO_ACTIVE_LOW>;
 	};
+	encoder_a: encoder_a {
+		compatible = "encoder";
+		gpios = <&gpioa 2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+	};
+ 	encoder_b: encoder_b {
+		compatible = "encoder";
+		gpios = <&gpiob 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+	};
 };

@@ -37,17 +37,14 @@ namespace device_buzzer
         gpio_pin_set_dt(&buzzer_pin, false);
     }
 
-    auto g_t = make_timer(timer_callback);
-    
+    auto m_t = make_timer(timer_callback);
+
     class buzzer
     {
     public:
         buzzer()
         {
-            if(gpio_pin_configure_dt(&buzzer_pin, GPIO_OUTPUT_INACTIVE) != 0)
-            {
-                return;
-            }
+            gpio_pin_configure_dt(&buzzer_pin, GPIO_OUTPUT_INACTIVE);
         }
         ~buzzer() = default;
         buzzer(buzzer &&) = delete;
@@ -58,7 +55,7 @@ namespace device_buzzer
         void beep(milliseconds ms = 50ms)
         {
             gpio_pin_set_dt(&buzzer_pin, true);
-            g_t.start(ms);
+            m_t.start(ms);
         }
     private:
     };
