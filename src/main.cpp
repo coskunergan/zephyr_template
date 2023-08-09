@@ -16,61 +16,46 @@
 #include <zpp.hpp>
 #include <chrono>
 #include "printf_io.h"
+#include "buzzer.h"
 
 #define STACK_SIZE (1024 + CONFIG_TEST_EXTRA_STACK_SIZE)
 
+using namespace zpp;
+using namespace std::chrono;
 using namespace device_printf;
-
-#if !DT_NODE_EXISTS(DT_NODELABEL(buzzer))
-#error "Overlay for gipo node not properly defined."
-#endif
-
-static const struct gpio_dt_spec buzzer =
-    GPIO_DT_SPEC_GET_OR(DT_NODELABEL(buzzer), gpios,
-                        {
-                            0
-                        });
+using namespace device_buzzer;
 
 namespace
 {
     ZPP_THREAD_STACK_ARRAY_DEFINE(tstack, 1, STACK_SIZE);
-    zpp::thread_data tcb;
-    zpp::thread t;
+    thread_data tcb;
+    thread t;
 
 } // anonimouse namespace
 
 void test_task(int my_id) noexcept
 {
-    gpio_pin_set_dt(&buzzer, true);
-    zpp::this_thread::sleep_for(std::chrono::milliseconds(50));
-    gpio_pin_set_dt(&buzzer, false);
+    buzzer.beep();
+
     for(;;)
     {
-        zpp::this_thread::sleep_for(std::chrono::milliseconds(500));
-       // gpio_pin_toggle_dt(&lcd_bl);
+        this_thread::sleep_for(3s);
+        buzzer.beep(5ms);
     }
 }
 
 int main(void)
 {
+    printf_io.turn_off_bl_enable();
     printf("\rRestart...");
 
-    if(!gpio_is_ready_dt(&buzzer))
-    { 
-        return 0;
-    }
-    if(gpio_pin_configure_dt(&buzzer, GPIO_OUTPUT_INACTIVE) != 0)
-    {
-        return 0;
-    }
-
-    const zpp::thread_attr attrs(
-        zpp::thread_prio::preempt(10),
-        zpp::thread_inherit_perms::no,
-        zpp::thread_suspend::no
+    const thread_attr attrs(
+        thread_prio::preempt(10),
+        thread_inherit_perms::no,
+        thread_suspend::no
     );
 
-    t = zpp::thread(tcb, tstack(0), attrs, test_task, 1);
+    t = thread(tcb, tstack(0), attrs, test_task, 1);
 
     t.join();
 

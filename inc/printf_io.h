@@ -12,17 +12,20 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/kernel.h>
-#include <zephyr/arch/cpu.h>
-#include <zephyr/sys/arch_interface.h>
 
 #include <zpp.hpp>
+#include <zpp/timer.hpp>
 #include <chrono>
+#include <zpp/thread.hpp>
+#include <zpp/fmt.hpp>
 
 namespace device_printf
 {
+    using namespace zpp;
+    using namespace std::chrono;
+
     extern "C" void __stdout_hook_install(int (*fn)(int));
     extern "C" int printf_io_write(int c);
-    const std::chrono::milliseconds bl_msec = std::chrono::milliseconds(5000);
 
     static const struct gpio_dt_spec lcd_bl =
         GPIO_DT_SPEC_GET_OR(DT_NODELABEL(lcd_bl), gpios,
@@ -174,10 +177,16 @@ namespace device_printf
         0x38, 0x38, 0xFE, 0x7C, 0x38, 0x10  //>
     };
 
+    void timer_callback(timer_base *t) noexcept
+    {
+        gpio_pin_set_dt(&lcd_bl, false);
+    }
+
+    auto g_t = make_timer(timer_callback);
+
     class printf_io
     {
     public:
-        //static std::unique_ptr<std::mutex> m_mutex;
         printf_io()
         {
             __stdout_hook_install(printf_io_write);
@@ -282,34 +291,15 @@ namespace device_printf
             return ch;
         }
 
-        void turn_off_bl_enable()
+        void turn_off_bl_enable(milliseconds ms = 3000ms)
         {
-            // if(!m_tim_ptr)
-            // {
-            //     sys::timer bl_timer(std::chrono::milliseconds(bl_msec), [&]
-            //     {
-            //         gpio_pin_set_dt(&lcd_bl, false);
-            //         return false;
-            //     });
-            //     m_tim_ptr = std::make_unique<sys::timer>(std::move(bl_timer));
-            //     m_tim_ptr->start();
-            // }
-            // else if(m_tim_ptr->running())
-            // {
-            //     m_tim_ptr->stop();
-            //     m_tim_ptr->start();
-            // }
-            // else
-            // {
-            //     m_tim_ptr->start();
-            // }
             gpio_pin_set_dt(&lcd_bl, true);
+            g_t.start(ms);
         }
 
     private:
         uint8_t ch_count;
-        //std::unique_ptr<sys::timer> m_tim_ptr;
-
+        
         void io_send(uint8_t byte)
         {
             for(uint8_t i = 0; i < 8; i++)
@@ -329,16 +319,12 @@ namespace device_printf
         }
     };
 
-    //std::unique_ptr<std::mutex> printf_io::m_mutex;
     printf_io printf_io;
+    mutex m;
 
     extern "C" int printf_io_write(int c)
     {
-        // if(!printf_io::m_mutex)
-        // {
-        //     printf_io::m_mutex = std::unique_ptr<std::mutex>(new std::mutex());
-        // }
-        // std::lock_guard<std::mutex> lg(*printf_io::m_mutex);
+        lock_guard g(m);
         printf_io.io_putchar(c);
         return c;
     }
