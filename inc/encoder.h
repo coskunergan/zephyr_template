@@ -18,7 +18,6 @@
 #include <zpp/thread.hpp>
 #include <zpp/fmt.hpp>
 #include <zpp/atomic_var.hpp>
-#include <functional>
 
 namespace device_encoder
 {
@@ -42,13 +41,13 @@ namespace device_encoder
                             });
 
     static struct gpio_callback encoder_cb_data;
-    std::function<void()> m_encoder_event_handler;
     static milliseconds m_debounce_time;
-    atomic_var m_atomic_count;
+    static atomic_var m_atomic_count;
+    static condition_variable m_encoder_cv;
 
     void timer_callback(timer_base *t) noexcept
     {
-        gpio_add_callback(encoder_a.port, &encoder_cb_data);   
+        gpio_add_callback(encoder_a.port, &encoder_cb_data);
     }
 
     auto m_t = make_timer(timer_callback);
@@ -65,15 +64,13 @@ namespace device_encoder
         }
         gpio_remove_callback(encoder_a.port, &encoder_cb_data);
         m_t.start(m_debounce_time);
-        if(m_encoder_event_handler)
-        {
-            //m_encoder_event_handler();
-        }             
+        m_encoder_cv.notify_all();
     }
 
     class encoder
     {
     public:
+
         encoder()
         {
             set_debounce_time();
@@ -109,9 +106,9 @@ namespace device_encoder
             m_atomic_count = val; // m_atomic_count.store(val);
         }
 
-        void set_event_hook(std::function<void()> &&handler)
+        condition_variable &event_cv()
         {
-            m_encoder_event_handler = std::move(handler);
+            return m_encoder_cv;
         }
     };
 
