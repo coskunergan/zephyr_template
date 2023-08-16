@@ -28,12 +28,14 @@
 		compatible = "buzzer";
 		gpios = <&gpioa 11 GPIO_ACTIVE_LOW>;
 	};
-	encoder_a: encoder_a {
+	encoder_pins: encoder_pins {
 		compatible = "encoder";
-		gpios = <&gpioa 2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+		gpios = <&gpioa 2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>,
+				<&gpiob 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 	};
- 	encoder_b: encoder_b {
-		compatible = "encoder";
-		gpios = <&gpiob 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
-	};
+	buttons: buttons {
+		compatible = "buttons";
+		gpios = <&gpioa 0 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>,
+				<&gpioe 5 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+	};		
 };

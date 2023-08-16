@@ -16,6 +16,7 @@
 #include <zpp.hpp>
 #include <chrono>
 #include "printf_io.h"
+#include "button.h"
 #include "buzzer.h"
 #include "encoder.h"
 
@@ -41,14 +42,17 @@ namespace
 
 void btn_task(int my_id) noexcept
 {
+    //sem();
     unique_lock lk(enc_mutex);
 
     for(;;)
     {
         encoder.event_cv().wait(lk);
         buzzer.beep(5ms);
-        //printf_io.turn_off_bl_enable();
-        //printf("\rEnc : %d", encoder.get_count());
+        // button.event_cv().wait(lk);            
+        // buzzer.beep(5ms);
+        // printf_io.turn_off_bl_enable();
+        // printf("\rButton : %d Pressed.", button.get_button_id());
     }
 }
 
