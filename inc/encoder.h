@@ -22,10 +22,12 @@
 #include <memory>
 #include <functional>
 #include <zpp/clock.hpp>
+#include <type_traits>
 
 namespace device_encoder
 {
     using namespace zpp;
+    using namespace std;
     using namespace std::chrono;
 #if !DT_NODE_EXISTS(DT_NODELABEL(encoder_pins))
 #error "Overlay for gipo node not properly defined."
@@ -41,7 +43,7 @@ namespace device_encoder
     static atomic_var m_atomic_count;
     static condition_variable m_encoder_cv;
 
-    void timer_callback2(timer_base *t) noexcept
+    void timer_callback2(timer_base *t)
     {
 
     }
@@ -84,17 +86,99 @@ namespace device_encoder
 
     }
 
+    using ExpireCallbackType = void(*)(timer_base *);
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+
+    class myclass
+    {
+    public:
+        myclass(): t(make_timer(timer_callback2)) {};
+        basic_timer<ExpireCallbackType> t;
+    };
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+
     class encoder
     {
     public:
+        // using BasePtr = std::unique_ptr<timer_base>;
+        // template <typename T>
+        // auto make_class(const T &x) -> BasePtr
+        // {
+        //     return std::unique_ptr<basic_timer<T> >(new basic_timer<T>(x));
+        // }
+
+        // template <typename T>
+        // struct CloneMixin
+        // {
+        //     unique_ptr<timer_base> clone()
+        //     {
+        //         T *this_shape = static_cast<T *>(this);
+        //         return unique_ptr<T>(new T(*this_shape));
+        //     }
+        // };
+
+
+
+        // template<class Derived>
+        // timer_base *clone(const timer_base *b)
+        // {
+        //     return new Derived(static_cast<const Derived *>(b));
+        // }
+
+        //void expire_callback(timer_base *)
+
+
 
         encoder()
         {
             set_debounce_time();
-            
-            using ExpireCallbackType = void(*)(timer_base *);
-            std::unique_ptr<timer_base> test = std::make_unique<basic_timer<ExpireCallbackType>>(timer_callback2);
-            //test->start(m_debounce_time); 
+
+            auto expire_callback = []()
+            {
+
+            };
+
+
+            //using ExpireCallbackType = void(*)(timer_base *);
+            using TimerCallback = std::function<void()>;
+
+            //std::unique_ptr<timer_base<decltype(expire_callback)>> timer = std::make_unique<basic_timer<decltype(expire_callback)>>(expire_callback);
+            // basic_timer'i oluşturmak için lambda fonksiyonu kullanılıyor
+
+
+            //timerVector[0]->start(m_debounce_time);
+
+            //basic_timer<ExpireCallbackType> my_temp(timer_callback2);
+            //timer_base *b = new basic_timer<ExpireCallbackType>(timer_callback2);
+
+            //timer_base*(*cloner)(const timer_base *) = clone<basic_timer<ExpireCallbackType>>;
+            //timer_base *copy = cloner(b);
+
+            //std::unique_ptr<> test;//(new basic_timer<ExpireCallbackType>(dynamic_cast<basic_timer<ExpireCallbackType> const &>(timer_callback2))); //std::make_shared<basic_timer<ExpireCallbackType>>(timer_callback2);
+
+
+
+
+
+            //timer_base *base_ptr = &my_temp;
+
+            //HouseA<int> *ptr_a = (HouseA<int> *)base_ptr;
+
+            // auto ptr = make_class<ExpireCallbackType>(timer_callback2);
+            //std::unique_ptr<timer_base> test = CloneMixin::clone<basic_timer<ExpireCallbackType>>(timer_callback2);
+            //std::unique_ptr<timer_base> test(new basic_timer(timer_callback2));
+            //if(test)
+            {
+                //test->start(m_debounce_time);
+            }
             //basic_timer d = basic_timer(timer_callback2);
             //std::vector<timer_base*> v;
             //v.push_back(&d);
@@ -155,17 +239,54 @@ namespace device_encoder
             //basic_timer *t =
             //my_list.emplace_back(new );
 
-           basic_timer test3 = basic_timer(timer_callback2);
+
+            std::vector<std::unique_ptr<timer_base>> someList;
+           //someList.emplace_back(static_cast<std::unique_ptr<timer_base>>(new basic_timer<ExpireCallbackType>(timer_callback2)));
+            //unique_ptr<timer_base> derivedPtr = dynamic_cast<std::unique_ptr<timer_base>>(basic_timer{timer_callback2});
+            // std::move(basic_timer<ExpireCallbackType>(timer_callback2));
+
+            //(static_cast<basic_timer<ExpireCallbackType>*>(someList[0].get()))->start(m_debounce_time);
+            //derivedPtr->start(m_debounce_time);
+            //someList.push_back(derivedPtr); 
+            //someList.push_back(make_timer(timer_callback2));
+           // auto *dptr = dynamic_cast<timer_base *>(someList[0].get());
+
+            //dptr->start(m_debounce_time);
+
+
+
+            // std::vector<timer_base *> tvec;
+
+            // basic_timer<ExpireCallbackType> *test3 = new ;
+
+            // basic_timer<ExpireCallbackType> *d_ptr = test3;
+
+            // timer_base *baseptr = dynamic_cast<timer_base *>(d_ptr);
+
+            //test3.start(m_debounce_time);
             //timer_base *test2 = new make_timer(timer_callback2);
             //std::unique_ptr<timer_base> test2(new timer_base);
-            timer_base *test2 = &test3;//.release();
-            test2->start(m_debounce_time);
+            // timer_base *test2 = baseptr;//.release();
+            //myclass test2();
+
+            // test2->start(m_debounce_time);
+
+            // basic_timer<ExpireCallbackType> *k=test2.instance();
+
+
+            //timer_base* u = test2.instance();
+
+            //u->start(m_debounce_time);
+            //test2.t.
+
+            //test2.t
+
+            //test2.t.start(m_debounce_time);
+            // test2.t.start(m_debounce_time);
             //basic_timer test2 = basic_timer{timer_callback2};
             //std::unique_ptr<timer_base> test(test2);
             //test2.start(m_debounce_time);
 
-
-            
             gpio_pin_configure_dt(&encoder_pins[0], GPIO_INPUT);
             gpio_pin_configure_dt(&encoder_pins[1], GPIO_INPUT);
             gpio_pin_interrupt_configure_dt(&encoder_pins[0], GPIO_INT_EDGE_TO_ACTIVE);
