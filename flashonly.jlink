@@ -1,4 +1,4 @@
-device STM32F407VG
+device STM32L151RD
 r
 #erase
 loadfile build\zephyr\zephyr.hex

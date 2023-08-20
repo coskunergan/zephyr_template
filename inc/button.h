@@ -59,6 +59,13 @@ namespace device_button
         }
     }
 
+    class timer_wrapper
+    {
+    public:
+        timer_wrapper() noexcept : tmr(basic_timer(timer_callback)) {};
+        basic_timer<void(*)(timer_base *)> tmr;
+    };
+    timer_wrapper timers[NUM_BUTTON_PINS];
 
     void button_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pin) noexcept
     {
