@@ -8,4 +8,4 @@ properties:
     type: phandle-array
     required: true
     description: |
-      The GPIO connected to the buttons pin
+      The GPIO connected to the button pins
