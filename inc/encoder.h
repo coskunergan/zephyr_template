@@ -24,7 +24,7 @@ namespace device_encoder
     using namespace zpp;
     using namespace std::chrono;
 #if !DT_NODE_EXISTS(DT_NODELABEL(encoder_pins))
-#error "Overlay for gipo node not properly defined."
+#error "Overlay for gpio node not properly defined."
 #endif
     static const struct gpio_dt_spec encoder_pins[2] =
     {

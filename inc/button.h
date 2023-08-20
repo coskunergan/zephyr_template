@@ -17,8 +17,6 @@
 #include <chrono>
 #include <zpp/thread.hpp>
 #include <zpp/fmt.hpp>
-#include <forward_list>
-#include <functional>
 
 namespace device_button
 {

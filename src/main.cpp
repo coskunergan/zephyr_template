@@ -1,6 +1,6 @@
 /*
-    GPIO Hal Library
-
+    Main.cpp
+	
     Created on: July 31, 2023
 
     Author: Coskun ERGAN
