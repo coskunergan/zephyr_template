@@ -36,6 +36,6 @@
 	buttons: buttons {
 		compatible = "buttons";
 		gpios = <&gpioa 0 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>,
-				<&gpioe 5 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+				<&gpioc 13 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 	};		
 };

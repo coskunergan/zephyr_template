@@ -7,16 +7,12 @@
 */
 
 #include <zephyr/devicetree.h>
-#include <zephyr/drivers/gpio.h>
 #include <zephyr/kernel.h>
-#include <zephyr/arch/cpu.h>
-#include <zephyr/sys/arch_interface.h>
-#include <zephyr/sys/libc-hooks.h>
 
 #include <zpp.hpp>
 #include <chrono>
 #include "printf_io.h"
-//#include "button.h"
+#include "button.h"
 #include "buzzer.h"
 #include "encoder.h"
 
@@ -25,6 +21,7 @@
 using namespace zpp;
 using namespace std::chrono;
 using namespace device_printf;
+using namespace device_button;
 using namespace device_buzzer;
 using namespace device_encoder;
 
@@ -42,20 +39,18 @@ namespace
 
 void btn_task(int my_id) noexcept
 {
-    //sem();
-    unique_lock lk(enc_mutex);
+    unique_lock lk(btn_mutex);
+
+    button.set_debounce_time(100ms);
 
     for(;;)
     {
-        encoder.event_cv().wait(lk);
-        buzzer.beep(5ms);
-        // button.event_cv().wait(lk);            
-        // buzzer.beep(5ms);
-        // printf_io.turn_off_bl_enable();
-        // printf("\rButton : %d Pressed.", button.get_button_id());
+        button.event_cv().wait(lk);
+        buzzer.beep(20ms);
+        printf_io.turn_off_bl_enable();
+        printf("\rButton : %d Pressed.  ", button.get_id());
     }
 }
-
 
 void enc_task(int my_id) noexcept
 {
@@ -64,9 +59,9 @@ void enc_task(int my_id) noexcept
     for(;;)
     {
         encoder.event_cv().wait(lk);
-        //buzzer.beep(5ms);
+        buzzer.beep(5ms);
         printf_io.turn_off_bl_enable();
-        printf("\rEnc : %d", encoder.get_count());
+        printf("\rEnc : %d  ", encoder.get_count());
     }
 }
 

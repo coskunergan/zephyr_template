@@ -24,10 +24,9 @@ namespace device_button
 {
     using namespace zpp;
     using namespace std::chrono;
-    static std::forward_list<std::pair<gpio_dt_spec, timer_base>> forwardListOfPairs;
 #define NUM_BUTTON_PINS DT_PROP_LEN(DT_PATH(buttons), gpios)
 #if !DT_NODE_EXISTS(DT_NODELABEL(buttons))
-#error "Overlay for gipo node not properly defined."
+#error "Overlay for button node not properly defined."
 #endif
     static const struct gpio_dt_spec buttons[] =
     {
@@ -49,15 +48,12 @@ namespace device_button
 #endif
     };
 
-    static struct gpio_callback button_cb_data;
+    static struct gpio_callback button_cb_data[NUM_BUTTON_PINS];
     static condition_variable button_cv;
+    static milliseconds debounce_time;
+    static size_t button_id;
 
-    void timer_callback(timer_base *t) noexcept
-    {
-        {
-            //gpio_add_callback(button_a.port, &button_cb_data);
-        }
-    }
+    void timer_callback(timer_base *t);
 
     class timer_wrapper
     {
@@ -67,43 +63,30 @@ namespace device_button
     };
     timer_wrapper timers[NUM_BUTTON_PINS];
 
-    void button_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pin) noexcept
+    void timer_callback(timer_base *t) noexcept
     {
-        // for(auto const &currentPair : forwardListOfPairs)
-        // {
-        //     const gpio_dt_spec button = currentPair.first;
-        //     if(button.pin == pin)
-        //     {
-        //         if(gpio_pin_get_dt(&button))
-        //         {
-        //             gpio_remove_callback(button.port, &button_cb_data);
-        //             //static_cast<basic_timer>(currentPair.second).start();
-        //             //make_timer()
-        //             //timer
-        //         }
-        //     }
-        // }
-        // swtich(pin)
-        // {
-        // case BIT(button_a.pin):
-        //     if(gpio_pin_get_dt(&button_a))
-        //     {
-        //         m_ta.start(m_debounce_time);
-        //
-        //     }
-        //     break;
-        // case BIT(button_b.pin):
-        //     if(gpio_pin_get_dt(&button_b))
-        //     {
-        //         m_tb.start(m_debounce_time);
-        //         gpio_remove_callback(button_b.port, &button_b_cb_data);
-        //     }
-        //     break;
-        // }
-        button_cv.notify_all();
+        for(size_t i = 0; i < NUM_BUTTON_PINS; i++)
+        {
+            if(&timers[i].tmr == t)
+            {
+                gpio_add_callback(buttons[i].port, &button_cb_data[i]);
+            }
+        }
     }
 
-    timer_base *m_t[NUM_BUTTON_PINS];
+    void button_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pin) noexcept
+    {
+        for(size_t i = 0; i < NUM_BUTTON_PINS; i++)
+        {
+            if(&button_cb_data[i] == cb)
+            {
+                button_id = i;
+                gpio_remove_callback(buttons[i].port, &button_cb_data[i]);
+                timers[i].tmr.start(debounce_time);
+            }
+        }
+        button_cv.notify_all();
+    }
 
     class button
     {
@@ -111,10 +94,12 @@ namespace device_button
         button()
         {
             set_debounce_time();
-            for(int i = 0; i < NUM_BUTTON_PINS; i++)
+            for(size_t i = 0; i < NUM_BUTTON_PINS; i++)
             {
-                auto t = make_timer(timer_callback);
-                m_t[i] = std::move(&t);
+                gpio_pin_configure_dt(&buttons[i], GPIO_INPUT);
+                gpio_pin_interrupt_configure_dt(&buttons[i], GPIO_INT_EDGE_TO_ACTIVE);
+                gpio_init_callback(&button_cb_data[i], button_isr, BIT(buttons[i].pin));
+                gpio_add_callback(buttons[i].port, &button_cb_data[i]);
             }
         }
         ~button() = default;
@@ -125,24 +110,24 @@ namespace device_button
 
         void set_debounce_time(milliseconds ms = 50ms)
         {
-            m_debounce_time = ms;
+            debounce_time = ms;
         }
 
         milliseconds get_debounce_time()
         {
-            return m_debounce_time;
+            return debounce_time;
         }
 
-    private:
-        static milliseconds m_debounce_time;
-        // std::unique_ptr<sys::timer> m_tim_ptr;
-        // std::chrono::milliseconds m_long_press_msec[max_button_num];
-        // std::function<bool()> m_button_check_handler[max_button_num];
-        // std::function<void()> m_button_press_handler[max_button_num];
-        // std::function<void()> m_button_longpress_handler[max_button_num];
-        // std::chrono::system_clock::time_point m_long_press_tp[max_button_num];
-        // std::unique_ptr<sys::thread> m_thread_ptr;
-        // cmsis::thread_flags m_th_flag;
+        size_t get_id()
+        {
+            return button_id;
+        }        
 
+        condition_variable &event_cv()
+        {
+            return button_cv;
+        }
     };
+
+    button button;
 }
