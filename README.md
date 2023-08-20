@@ -1,4 +1,4 @@
-# Zephyr RTOS C++20 Template 
+# ZephyrRTOS Workspace Application Template ::ZPP C++20 API
 
 ![alt text](doc/img_logo.png)
 
